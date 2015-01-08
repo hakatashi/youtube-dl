@@ -114,7 +114,22 @@ class NiconicoIE(InfoExtractor):
         if 'deleted=' in flv_info_webpage:
             raise ExtractorError('The video has been deleted.',
                                  expected=True)
-        video_real_url = compat_urlparse.parse_qs(flv_info_webpage)['url'][0]
+
+        flv_info = compat_urlparse.parse_qs(flv_info_webpage)
+        video_real_url = flv_info['url'][0]
+
+        video_url_parsed = compat_urlparse.urlparse(video_real_url)
+
+        # RTMP information
+        if video_url_parsed.scheme == 'rtmpe':
+            video_real_url = '%s://%s%s' % (video_url_parsed.scheme, video_url_parsed.netloc, video_url_parsed.path)
+            app = 'smile'
+            page_url = 'http://www.nicovideo.jp/watch/' + video_id
+            player_url = 'http://res.nimg.jp/swf/player/secure_nccreator.swf?t=201111091500'
+            flash_version = 'WIN 16,0,0,235'
+            play_path = compat_urlparse.parse_qs(video_url_parsed.query)['m'][0]
+            fmst = flv_info['fmst'][0].split(':')
+            rtmp_conn = ['S:%s' % fmst[1], 'S:%s' % fmst[0], 'S:%s' % play_path]
 
         # Start extracting information
         title = video_info.find('.//title').text
@@ -152,6 +167,12 @@ class NiconicoIE(InfoExtractor):
             'comment_count': comment_count,
             'duration': duration,
             'webpage_url': webpage_url,
+            'app': app,
+            'page_url': page_url,
+            'player_url': player_url,
+            'flash_version': flash_version,
+            'play_path': play_path,
+            'rtmp_conn': rtmp_conn,
         }
 
 
